@@ -8,13 +8,6 @@ const Settings = require("./classes.js");
     'use strict';
 
     const settings = new Settings();
-
-    /*
-    ToDo:
-    1. Fix barcode scan verify when code differs
-    2. Set max limit on mass complete (maybe some better logging of actions too)
-    3. Refactor!
-    */
     
     // Get the path for the current window location
     var path = window.location.pathname;
@@ -47,6 +40,10 @@ const Settings = require("./classes.js");
 
             case /bztrs\/packingportal\/Reservations\/Index\/.*/.test(path):
                 onVerifyReservationStep();
+                break;
+
+            case /bztrs\/packingportal\/AddParcels\/.*/.test(path):
+                onAddParcels();
                 break;
 
             case /bztrs\/packingportal.*/.test(path):
@@ -92,7 +89,7 @@ const Settings = require("./classes.js");
         // HACKY WORKAROUND to clear input after scan
         document.querySelector("#verifyProduct").addEventListener("click", clearInput("#productBarcode"), false);
 
-        addProductList();
+        addProductList("Nodige Producten");
         editReservationDetails();
         createCommentBox();
         clearAllParcelItems();
@@ -116,6 +113,11 @@ const Settings = require("./classes.js");
         if (completionSuccess == true) {
             proceedStep("#ReservationContainer > div:nth-child(11) > div > button");
         }
+    }
+
+    // Called when the add parcels page is opened
+    function onAddParcels() {
+        addProductList("Producten", true);
     }
 
     // Modify the footer to display version information about the userscript
@@ -311,7 +313,7 @@ const Settings = require("./classes.js");
     }
 
     // Add product list in the 3rd step, this is useful for seeing which products need to be collected in the packages
-    function addProductList(){
+    function addProductList(title, minimal){
         // Create empty div to load list content into
         var productList = document.createElement("div");
         productList.setAttribute("id", "productList");
@@ -321,7 +323,7 @@ const Settings = require("./classes.js");
         // Create title for content
         var productListTitle = document.createElement("h4");
         document.querySelector("#ReservationOverview > div:nth-child(2) > div.col-9").prepend(productListTitle);
-        $(productListTitle).html("Nodige Producten");
+        $(productListTitle).html(title);
 
         var reservationID = document.getElementById("ReservationId").value;
 
@@ -331,7 +333,7 @@ const Settings = require("./classes.js");
         // Load productlist from cached data if it exists, otherwise AJAX load
         if (cachedList) {
             document.querySelector("#productList").innerHTML = cachedList;
-            alterList(productList);
+            alterList(productList, minimal);
             console.log("Product list loaded from cache.")
         } else {
             $("#productList").load("https://retailvista.net/bztrs/packingportal/Reservations/Index/" + reservationID + " #ReservationContainer > div > div.container.my-2 > div", function(data){
@@ -359,7 +361,7 @@ const Settings = require("./classes.js");
     }
 
     // Companion function to structure the list
-    function alterList(productList){
+    function alterList(productList, minimal){
         // Remove scan message
         $("#productList > div > div > div").remove();
 
@@ -372,6 +374,13 @@ const Settings = require("./classes.js");
         list.children[0].children[3].innerText = "Nodig aantal";
         for (let i = 1; i < list.children.length; i++) {
             list.children[i].children[3].innerText = list.children[i].children[3].innerText.split("van ").pop();
+        }
+
+        if (minimal) {
+            for (let i = 0; i< list.children.length; i++) {
+                list.children[i].children[4].remove();
+                list.children[i].children[3].remove();
+            }
         }
 
         // Maybe add this back later as a setting? 
