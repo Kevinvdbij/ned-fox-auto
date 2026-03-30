@@ -56,7 +56,7 @@ const Settings = require("./classes.js");
     }
 
     // Create the options panel for modifying userscript settings
-    createOptionsPanel();
+    //createOptionsPanel();
 
     // Step 1: called on the home page where the user has to select a reservation
     function onSelectReservationStep() {
@@ -558,7 +558,8 @@ const Settings = require("./classes.js");
             }
 
             // Check if the response contains a product list modal
-            let loadedModal = document.querySelector("#productReservationsModal");
+            let dummyLoader = document.querySelector("[id=dummyLoader]");
+            let loadedModal = dummyLoader.querySelector("#productReservationsModal");
             if (loadedModal) {
                 $('body').removeClass('busy');
 
