@@ -1,8 +1,9 @@
 const version = require("../package.json").version;
 const Settings = require("./classes.js");
+const waitForKeyElements = require("./waitForKeyElements.js");
 
 
-/* globals jQuery, $, waitForKeyElements */
+/* globals jQuery, $ */
 
 (function() {
     'use strict';
@@ -434,27 +435,34 @@ const Settings = require("./classes.js");
         const collectedHTML = '<span class="text-success"><span class="material-icons">done</span></span>';
         const uncollectedHTML = '<span class="text-warning"><span class="material-icons">close</span></span>';
 
+        // Get a list of all the products in the product list
+        let products = Array.from(document.querySelector("#productList > div > div > table > tbody").children);
+        products.shift(); // remove the heading from the list
+
+        // Assign a product list element to each reservation row based on the barcode
+        let verificationReservationRows = Array.from(document
+                .querySelectorAll("input[id^='VerificationReservationRows_'][id$='__ProductMainBarcode']")).map((input) => {
+                    return {
+                        rowId: input.id.split("VerificationReservationRows_").pop().split("__ProductMainBarcode").shift(),
+                        listElement: products.splice(products.findIndex((product) => product.children[2].innerText == input.value), 1)[0]
+                    }
+                });
+
+        // Create an observer that listens for changes in the parcels container
         let observer = new MutationObserver(() => {
-            let products = Array.from(document.querySelector("#productList > div > div > table > tbody").children);
-
-            for(let i = 1; i < products.length; i++) {
-                // Find neccessary attributes
-                let barcode = products[i].children[2].innerText;
-                let barcodeInput = document.querySelector("input[value='" + barcode + "'][id^='VerificationReservationRows']:not([id='productBarcode']):not([verified='true'])");
-                barcodeInput.setAttribute("verified", "true");
-
-                let inputId = barcodeInput.id.split("VerificationReservationRows_").pop().split("__ProductMainBarcode").shift();
-
+            verificationReservationRows.forEach((reservationRow) => {
                 // Get the required and verified amounts neccesary for the product
-                let verifiedAmount = parseInt(document.querySelector("input[id=VerificationReservationRows_" + inputId + "__VerifiedQuantity]").value);
-                let requiredAmount = parseInt(document.querySelector("input[id=VerificationReservationRows_" + inputId + "__ProductQuantity]").value);
+                let verifiedAmount = parseInt(document.querySelector("input[id=VerificationReservationRows_" + reservationRow.rowId + "__VerifiedQuantity]").value);
+                let requiredAmount = parseInt(document.querySelector("input[id=VerificationReservationRows_" + reservationRow.rowId + "__ProductQuantity]").value);
 
                 // Change the icon based on the state
-                products[i].children[4].children[0].innerHTML = verifiedAmount >= requiredAmount ? collectedHTML : uncollectedHTML;
-                products[i].querySelector("button").disabled = verifiedAmount >= requiredAmount ? true : false;
-            }
+                reservationRow.listElement.children[4].children[0].innerHTML = verifiedAmount >= requiredAmount ? collectedHTML : uncollectedHTML;
+                if (settings.enableAddButtons) {
+                    reservationRow.listElement.querySelector("button").disabled = verifiedAmount >= requiredAmount ? true : false;
+                }
+            });
         });
-
+        
         const observerOptions = {
             childList: true,
             subtree: true,
@@ -915,8 +923,6 @@ const Settings = require("./classes.js");
 
         if (settings.enableAddButtons) { checkboxAddButtons.setAttribute("checked", ""); }
         checkboxAddButtons.addEventListener('change', (event) => { settings.enableAddButtons = event.target.checked; });
-
-        console.log(settings.proceed)
     }
 
     /********************************************
