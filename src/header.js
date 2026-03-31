@@ -1,8 +1,8 @@
 const package = require("../package.json");
 
 module.exports = {
-    name: "NedFoxAutoKHR-DEV",
-    namespace: "NedFoxAutoKHR-DEV",
+    name: "NedFoxAutoKHR",
+    namespace: "NedFoxAutoKHR",
     description: "Auto-Proceed Nedfox steps in the packing portal",
     author: package.author,
     version: package.version,

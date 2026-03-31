@@ -24,7 +24,7 @@ module.exports = {
       proxyScript: {
         baseURL: pathToFileURL(path.resolve(__dirname, "dist", 'nedFoxAuto.proxy.user.js')),
         filename: '[basename].proxy.user.js',
-      },
-    }),
+      }
+    })
   ],
 };

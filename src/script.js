@@ -399,8 +399,11 @@ const Settings = require("./classes.js");
 
         if (minimal) {
             for (let i = 0; i< list.children.length; i++) {
+                if  (i == 0) {
+                    list.children[i].children[3].innerText = "Aantal";
+                }
+
                 list.children[i].children[4].remove();
-                list.children[i].children[3].remove();
             }
         }
 
@@ -626,6 +629,12 @@ const Settings = require("./classes.js");
                     }
 
                     newButton.setAttribute("urlref", url)
+
+                    console.log(button.href);
+
+                    button = document.querySelector("[href='" + button.href.split("https://retailvista.net")[1] + "']");
+
+                    console.log(button);
 
                     // Remove the old button
                     button.parentElement.append(newButton);
