@@ -46,6 +46,10 @@ const Settings = require("./classes.js");
                 onAddParcels();
                 break;
 
+            case /bztrs\/packingportal\/AnnounceParcels.*/.test(path):
+                proceedStep("#ReservationContainer > div.container.my-2 > div:nth-child(4) > div > button");
+                break;
+
             case /bztrs\/packingportal.*/.test(path):
                 onSelectReservationStep();
                 break;
@@ -53,7 +57,7 @@ const Settings = require("./classes.js");
     }
 
     // Create the options panel for modifying userscript settings
-    //createOptionsPanel();
+    createOptionsPanel();
 
     // Step 1: called on the home page where the user has to select a reservation
     function onSelectReservationStep() {
@@ -122,11 +126,24 @@ const Settings = require("./classes.js");
 
     // Modify the footer to display version information about the userscript
     function modifyFooter() {
-        let footerVersionText = document.querySelector("footer > div > div > div.col-auto.mr-auto.text-left > div");
-        footerVersionText.innerHTML += `
-            <div class="col ml-2">
-                <span>Nedfox Auto KHR ${version}</span>
-            </div>`;
+        setTimeout(() => {
+            let footerVersionText = document.querySelector("footer > div > div > div.col-auto.mr-auto.text-left > div");
+            footerVersionText.insertAdjacentHTML("beforeend", `
+                <div class="col ml-2">
+                    <span>Nedfox Auto KHR ${version}</span>
+                </div>`);
+
+            footerVersionText.insertAdjacentHTML("beforeend", `
+                <div class="col">
+                    <button id="settingsButton" type="button" class="nav-link btn btn-link remove-padding">Instellingen</button>
+                </div>`);
+
+            let settingsButton = document.querySelector("[id=settingsButton]");
+            settingsButton.onclick = function() {
+                setOptionsPanelVisibility();
+                console.log("Settings button clicked");
+            }
+        }, 0);
     }
 
     // Order the retrieved list of open orders and select the first one
@@ -363,7 +380,11 @@ const Settings = require("./classes.js");
     // Companion function to structure the list
     function alterList(productList, minimal){
         // Remove scan message
-        $("#productList > div > div > div").remove();
+        if (minimal) {
+            $("#productList > div > div > div").remove();
+        } else {
+            document.querySelector("#productList > div > div > div").setAttribute("style", "max-width:47.5%;")
+        }
 
         // remove check symbol from list
         Array.from($("#productList > div > div > table > tbody").children()).forEach(function(item){
@@ -383,27 +404,27 @@ const Settings = require("./classes.js");
             }
         }
 
-        // Maybe add this back later as a setting? 
-
-/*         let heading = document.createElement("th");
-        heading.innerText = "Actie";
-        list.children[0].append(heading);
-        for (let i = 1; i < list.children.length; i++) {
-            let element = document.createElement("td");
-            
-            let button = document.createElement("button");
-            button.setAttribute("class", "btn btn-primary");
-            button.innerHTML = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&icon_names=add" /><span class="material-symbols-outlined"> add </span>';
-            button.setAttribute("style", "width:26px; height:26px; display: flex; justify-content: center; align-items: center;");
-            button.setAttribute("type", "button");
-            button.addEventListener("click", function(){
-                document.querySelector("input[id=productBarcode]").value = list.children[i].children[2].children[0].innerText;
-                document.querySelector("button[id=verifyProduct]").click();
-            });
-            
-            element.append(button);
-            list.children[i].append(element);
-        } */
+        if (!minimal && settings.enableAddButtons) {
+            let heading = document.createElement("th");
+            heading.innerText = "Actie";
+            list.children[0].append(heading);
+            for (let i = 1; i < list.children.length; i++) {
+                let element = document.createElement("td");
+                
+                let button = document.createElement("button");
+                button.setAttribute("class", "btn btn-primary");
+                button.innerHTML = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&icon_names=add" /><span class="material-symbols-outlined"> add </span>';
+                button.setAttribute("style", "width:26px; height:26px; display: flex; justify-content: center; align-items: center;");
+                button.setAttribute("type", "button");
+                button.addEventListener("click", function(){
+                    document.querySelector("input[id=productBarcode]").value = list.children[i].children[2].children[0].innerText;
+                    document.querySelector("button[id=verifyProduct]").click();
+                });
+                
+                element.append(button);
+                list.children[i].append(element);
+            }
+        }
     }
 
     function onScanProductForParcel() {
@@ -412,10 +433,13 @@ const Settings = require("./classes.js");
 
         let observer = new MutationObserver(() => {
             let products = Array.from(document.querySelector("#productList > div > div > table > tbody").children);
+
             for(let i = 1; i < products.length; i++) {
                 // Find neccessary attributes
                 let barcode = products[i].children[2].innerText;
-                let barcodeInput = document.querySelector("input[value='" + barcode + "'][id^='VerificationReservationRows']:not([id='productBarcode'])");
+                let barcodeInput = document.querySelector("input[value='" + barcode + "'][id^='VerificationReservationRows']:not([id='productBarcode']):not([verified='true'])");
+                barcodeInput.setAttribute("verified", "true");
+
                 let inputId = barcodeInput.id.split("VerificationReservationRows_").pop().split("__ProductMainBarcode").shift();
 
                 // Get the required and verified amounts neccesary for the product
@@ -811,21 +835,37 @@ const Settings = require("./classes.js");
         localStorage.setItem("NKHR_LastCompletedReservationDetails", JSON.stringify(reservationDetails));
     }
 
+    function setOptionsPanelVisibility(visible) {
+        let panel = document.querySelector("#optionsPanel");
+        
+        if (visible == undefined) {
+            visible = panel.style.display == "none" ? true : false;
+        }
+        
+        if (visible) {
+            panel.style.display = "block";
+        } else {
+            panel.style.display = "none";
+        }
+    }
+
     function createOptionsPanel() {
         let panelElement = document.createElement("div");
         panelElement.setAttribute("id", "optionsPanel")
 
         let style = `
+            display:none;
             width:250px;
             min-height:200px;
             background-color:#eff6f3;
             position:absolute;
             right:0px;
-            top: 50%;
+            bottom: 0px;
             transform:translate(0, -50%);
             border-style:solid;
             border-width:1px;
             border-color:#3e5f42;
+            z-index:1000;
         `;
 
         panelElement.setAttribute("style", style);
@@ -846,6 +886,12 @@ const Settings = require("./classes.js");
             <label for="checkboxProceed" style="margin-left:10px;">Automatisch doorgaan</label>
         `;
 
+        panelElement.innerHTML += `
+            <br>
+            <input type="checkbox" id="checkboxAddButtons" name="checkboxAddButtons" style="margin-left:10px; vertical-align: middle;">
+            <label for="checkboxAddButtons" style="margin-left:10px;">Toevoeg knoppen</label>
+        `;
+
         let checkboxEnabled = document.querySelector("[id=checkboxEnabled]");
 
         if (settings.enabled) { checkboxEnabled.setAttribute("checked", ""); }
@@ -855,6 +901,11 @@ const Settings = require("./classes.js");
 
         if (settings.proceed) { checkboxProceed.setAttribute("checked", ""); }
         checkboxProceed.addEventListener('change', (event) => { settings.proceed = event.target.checked; });
+
+        let checkboxAddButtons = document.querySelector("[id=checkboxAddButtons]");
+
+        if (settings.enableAddButtons) { checkboxAddButtons.setAttribute("checked", ""); }
+        checkboxAddButtons.addEventListener('change', (event) => { settings.enableAddButtons = event.target.checked; });
 
         console.log(settings.proceed)
     }
