@@ -44,6 +44,12 @@ const waitForKeyElements = require("./waitForKeyElements.js");
                 break;
 
             case /bztrs\/packingportal\/AddParcels\/.*/.test(path):
+                if (/bztrs\/packingportal\/AddParcels\/Search\?ReservationNumber=/
+                    .test(window.location.pathname + window.location.search)) {
+                        onSelectReservationStep();
+                        return;
+                    }
+                    
                 onAddParcels();
                 break;
 
@@ -92,7 +98,7 @@ const waitForKeyElements = require("./waitForKeyElements.js");
         }
 
         // HACKY WORKAROUND to clear input after scan
-        document.querySelector("#verifyProduct").addEventListener("click", clearInput("#productBarcode"), false);
+        //document.querySelector("#verifyProduct").addEventListener("click", clearInput("#productBarcode"), false);
 
         addProductList("Nodige Producten");
         editReservationDetails();
@@ -431,6 +437,7 @@ const waitForKeyElements = require("./waitForKeyElements.js");
         }
     }
 
+    // Logic that verifies and visually modifies the product list to reflect the products that have been collected in the parcels
     function onScanProductForParcel() {
         const collectedHTML = '<span class="text-success"><span class="material-icons">done</span></span>';
         const uncollectedHTML = '<span class="text-warning"><span class="material-icons">close</span></span>';
@@ -461,6 +468,11 @@ const waitForKeyElements = require("./waitForKeyElements.js");
                     reservationRow.listElement.querySelector("button").disabled = verifiedAmount >= requiredAmount ? true : false;
                 }
             });
+
+            let parcelList = document.querySelectorAll("#parcels-content-694897 > div > div.card-body > table > tbody > tr");
+            for (let i = 1; i < parcelList.length -1; i++) {
+                parcelList[i].querySelector("button")?.remove()
+            }
         });
         
         const observerOptions = {
@@ -677,8 +689,11 @@ const waitForKeyElements = require("./waitForKeyElements.js");
 
         // Iterate through found remove buttons from the last with a delay, without this delay the removal fails
         if (removeButtons.length > 0) {
+            // Set the class to busy so the user knows actions are happening
+            $('body').addClass('busy');
             for (let i = 0; i < removeButtons.length; i++) {
                 setTimeout(() => {
+                    $('body').addClass('busy');
                     // format the onclick event to usable data
                     let parcelInfo = removeButtons.pop().onclick.toString().split('(').pop().split(')').shift().split(',');
 
@@ -694,6 +709,7 @@ const waitForKeyElements = require("./waitForKeyElements.js");
                     location.href = "javascript:void(update());";
                 }, i * 250);  
             }
+            $('body').removeClass('busy');
         }
     }
 
@@ -709,7 +725,7 @@ const waitForKeyElements = require("./waitForKeyElements.js");
         var orderNumber = document.querySelector("#ReservationSummary\\ mb-2 > div:nth-child(3)").innerHTML.split(' ')[2];
 
         // Return and do not create the comment box if the number length does not match shopware
-        if (orderNumber.length != 6) return;
+        if (orderNumber.length != 6) return false;
 
         // Create the comment box dialog
         var commentBox = document.createElement("div");
@@ -791,7 +807,18 @@ const waitForKeyElements = require("./waitForKeyElements.js");
             openShopwareButton.onclick = () => {
                 window.open("https://www.kampeerhalroden.nl/admin#/sw/order/detail/" + orderData.data[0].id + "/general", "_blank").focus();
             }
+
+            let hasValue = (commentTextArea.value != undefined && commentTextArea.value != "");
+            if (hasValue) {
+                commentWarning();
+            }
         });
+    }
+
+    function commentWarning() {
+        let productListHeading = document.querySelector("#ReservationOverview > div:nth-child(2) > div.col-9");
+        productListHeading.insertAdjacentHTML("afterbegin", `
+            <div class="mt-2 alert alert-info" style="text-align: center; font-size: 24px; max-width:100%;color: #7f5353;background-color: #f6efef;border-color: #7f5353;"><b>Let op!</b> Er is een shopware notitie.</div>`);
     }
 
     // Add button to search portal to open last completed reservation, this makes it easy to add new packages to an order that was just completed.

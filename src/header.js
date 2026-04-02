@@ -8,8 +8,7 @@ module.exports = {
     version: package.version,
     license: "MIT",
     match: [
-        "https://retailvista.net/bztrs/*", 
-        "file:///C:/Users/Kevin/OneDrive%20-%20Webshop/Backoffice/Tampermonkey/*"
+        "https://retailvista.net/bztrs/*",
     ],
     icon: "https://www.kampeerhalroden.nl/media/e9/9d/08/1703346720/favicon.ico",
     grant: [
