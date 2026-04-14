@@ -339,14 +339,6 @@ const waitForKeyElements = require("./waitForKeyElements.js");
                            elements[0].click());
     }
 
-    // Clear input form with a weird delay !!!HACKY WORKAROUND FOR CHROME/EDGE 142 BEHAVIOUR!!!
-    function clearInput(selector){
-        setTimeout(() => {
-            waitForKeyElements(selector, elements => {
-                           elements[0].value = ""});
-        }, "0");
-    }
-
     // Add product list in the 3rd step, this is useful for seeing which products need to be collected in the packages
     function addProductList(title, minimal){
         // Create empty div to load list content into
@@ -480,7 +472,7 @@ const waitForKeyElements = require("./waitForKeyElements.js");
                 }
             });
 
-            let parcelList = document.querySelectorAll("#parcels-content-694897 > div > div.card-body > table > tbody > tr");
+            let parcelList = document.querySelectorAll("div > div.card-body > table > tbody > tr");
             for (let i = 1; i < parcelList.length -1; i++) {
                 parcelList[i].querySelector("button")?.remove()
             }
