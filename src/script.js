@@ -43,13 +43,15 @@ const waitForKeyElements = require("./waitForKeyElements.js");
                 onVerifyReservationStep();
                 break;
 
-            case /bztrs\/packingportal\/AddParcels\/.*/.test(path):
-                if (/bztrs\/packingportal\/AddParcels\/Search\?ReservationNumber=/
-                    .test(window.location.pathname + window.location.search)) {
-                        onSelectReservationStep();
-                        return;
-                    }
-                    
+            case /bztrs\/packingportal\/AddParcels\/Search\?ReservationNumber=/
+                .test(window.location.pathname + window.location.search):
+                if (document.querySelector("head > title")
+                    .innerHTML == "Home Page - NedFox.RetailVista.Packing.UI") {
+
+                    onSelectReservationStep();
+                    return;
+                }
+
                 onAddParcels();
                 break;
 
@@ -68,6 +70,8 @@ const waitForKeyElements = require("./waitForKeyElements.js");
 
     // Step 1: called on the home page where the user has to select a reservation
     function onSelectReservationStep() {
+        console.log("Entered reservation selection step");
+
         addLastReservationButtons();
         silentLoadOnSearch();
 
@@ -79,6 +83,7 @@ const waitForKeyElements = require("./waitForKeyElements.js");
 
     // Step 2: called on the second page where the user has to verify the products in the reservation
     function onVerifyReservationStep() {
+        console.log("Entered verify reservation step");
         cacheProductList();
 
         // Skips the second step and sets all products to collected, we do not need the 2nd step anymore because of the loaded product list in step 3
@@ -87,6 +92,8 @@ const waitForKeyElements = require("./waitForKeyElements.js");
 
     // Step 3: called on the third page where the user has to create the shipping parcel
     function onShipReservationStep() {
+        console.log("Entered ship reservation step");
+
         // Click button to third step to finalize order processing when it is enabled
         if (urlParams.has("autoComplete")) {
             if (urlParams.get("autoComplete") != "false") {
@@ -112,6 +119,8 @@ const waitForKeyElements = require("./waitForKeyElements.js");
 
     // Step 4: called on the fourth page with the completion status of the reservation
     function onCompleteReservationStep() {
+        console.log("Entered complete reservation step");
+
         // Save current reservation as last completed.
         saveLastCompletedReservation();
 
@@ -128,6 +137,8 @@ const waitForKeyElements = require("./waitForKeyElements.js");
 
     // Called when the add parcels page is opened
     function onAddParcels() {
+        console.log("Entered add parcels screen");
+
         addProductList("Producten", true);
     }
 
