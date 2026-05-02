@@ -557,7 +557,7 @@ const waitForKeyElements = require("./waitForKeyElements.js");
                     $('body').removeClass('busy');
 
                     // Load the messages from the loaded page if any exist
-                    document.querySelector("#messages").parentElement.innerHTML = document.querySelector("#alert").parentElement.parentElement.innerHTML;
+                    document.querySelector("#messages").parentElement.innerHTML = loadElement.querySelector("#alert").parentElement.parentElement.innerHTML;
                     
                     // Select and empty the barcode
                     document.querySelector("#Productbarcode").focus();
